@@ -1,0 +1,89 @@
+services:
+    postgres:
+        image: postgres:16-alpine
+        container_name: pg_waitset
+        environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        ports:
+            - "${POSTGRES_PORT}:5432"
+        volumes:
+            - pg_data:/var/lib/postgresql/data
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+                ]
+            interval: 3s
+            timeout: 3s
+            retries: 30
+
+    dbt:
+        build:
+            context: ./waitset_pipeline
+            dockerfile: Dockerfile
+        container_name: dbt_waitset
+        depends_on:
+            postgres:
+                condition: service_healthy
+        environment:
+            DBT_TARGET: ${DBT_TARGET}
+            DB_HOST: postgres
+            DB_PORT: 5432
+            DB_NAME: ${POSTGRES_DB}
+            DB_USER: ${POSTGRES_USER}
+            DB_PASSWORD: ${POSTGRES_PASSWORD}
+        volumes:
+            # dbt project
+            - ./waitset_pipeline:/usr/app
+            - ./waitset_pipeline/profiles.yml:/root/.dbt/profiles.yml:ro
+        working_dir: /usr/app
+        entrypoint:
+            [
+                "bash",
+                "-lc"
+            ]
+        command:
+            [
+                "tail -f /dev/null"
+            ]
+
+    airflow-init:
+        image: apache/airflow:2.9.3
+        environment:
+            AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+        depends_on:
+            - postgres
+        command: airflow db migrate
+
+    airflow-webserver:
+        image: apache/airflow:2.9.3
+        depends_on:
+            airflow-init:
+                condition: service_completed_successfully
+        environment:
+            AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+        volumes:
+            - ./airflow/dags:/opt/airflow/dags
+        ports:
+            - "8080:8080"
+        command: airflow webserver
+
+    airflow-scheduler:
+        image: apache/airflow:2.9.3
+        depends_on:
+            airflow-init:
+                condition: service_completed_successfully
+        environment:
+            AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+        volumes:
+            - ./airflow/dags:/opt/airflow/dags
+        command: airflow scheduler
+
+volumes:
+    pg_data:
