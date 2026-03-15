@@ -44,7 +44,7 @@ def group_files_by_required_tables():
 
             if file_name == "documents.jsonl":
                 grouped_files[table_name]["documents"] = file
-            elif file_name == "schema.jsonl":
+            elif file_name == "generated_schema.jsonl":
                 grouped_files[table_name]["schema"] = file
 
     return grouped_files
@@ -52,11 +52,18 @@ def group_files_by_required_tables():
 
 def create_table_dir():
     grouped_files = group_files_by_required_tables()
+    prepared_tables = {}
     today_export_dir = get_today_export_dir()
     main_folder = Path("tables")
-    for table, _ in grouped_files.items():
+    for table, files in grouped_files.items():
         folder = today_export_dir / main_folder / table
         folder.mkdir(parents=True, exist_ok=True)
+        prepared_tables[table] = {
+            "dir": main_folder,
+            "documents": files["documents"],
+            "schema": files["schema"],
+        }
+    return prepared_tables
 
 
 create_table_dir()
