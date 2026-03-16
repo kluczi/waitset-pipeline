@@ -1,30 +1,44 @@
 from zipfile import ZipFile
 from pathlib import Path
-from convex_export_service import build_full_path
+from convex_export_service import (
+    current_date,
+    get_project_root,
+    get_convex_root,
+    generate_export_path,
+    generate_export_file_name,
+    build_full_path,
+)
 
-tables = ["projects", "signups", "user_subscription_tracking"]
+TABLES: list[str] = ["projects", "signups", "user_subscription_tracking"]
 
 
-def get_today_export_zip_path():
-    return build_full_path()
+def get_today_export_zip_path() -> Path:
+    date = current_date()
+    project_root = get_project_root()
+    convex_root = get_convex_root(project_root)
+    export_path = generate_export_path(convex_root, date)
+    file_name = generate_export_file_name(date)
+    return build_full_path(export_path, file_name)
 
 
-def get_today_export_dir():
-    return get_today_export_zip_path().parent
+def get_export_dir(zip_path: Path) -> Path:
+    return zip_path.parent
 
 
-def open_export_zip(path):
+def open_export_zip(path: Path) -> ZipFile:
     return ZipFile(path)
 
 
-def get_files_list(zip_file):
+def get_files_list(zip_file: ZipFile) -> list[str]:
     return zip_file.namelist()
 
 
-def group_files_by_required_tables():
-    grouped_files = {}
+def group_files_by_required_tables(
+    zip_path: Path, tables: list[str]
+) -> dict[str, dict[str, str]]:
+    grouped_files: dict[str, dict[str, str]] = {}
 
-    with open_export_zip(get_today_export_zip_path()) as zip_file:
+    with open_export_zip(zip_path) as zip_file:
         file_list = get_files_list(zip_file)
 
         for file in file_list:
@@ -50,21 +64,33 @@ def group_files_by_required_tables():
     return grouped_files
 
 
-def create_table_dir():
-    grouped_files = group_files_by_required_tables()
-    prepared_tables = {}
-    today_export_dir = get_today_export_dir()
-    main_folder = Path("tables")
+def prepare_tables_folder(export_dir: Path) -> Path:
+    return export_dir / "tables"
+
+
+def create_table_dirs(
+    tables_folder: Path, grouped_files: dict[str, dict[str, str]]
+) -> dict[str, dict[str, str | Path]]:
+    prepared_tables: dict[str, dict[str, str | Path]] = {}
+
     for table, files in grouped_files.items():
-        folder = today_export_dir / main_folder / table
+        folder = tables_folder / table
         folder.mkdir(parents=True, exist_ok=True)
         prepared_tables[table] = {
-            "dir": main_folder,
+            "dir": folder,
             "documents": files["documents"],
             "schema": files["schema"],
         }
+
     return prepared_tables
 
 
-create_table_dir()
-print(group_files_by_required_tables())
+def extract_files(
+    zip_path: Path,
+    tables_folder: Path,
+    grouped_files: dict[str, dict[str, str]],
+) -> None:
+    with open_export_zip(zip_path) as zip_file:
+        for table_files in grouped_files.values():
+            zip_file.extract(table_files["documents"], path=tables_folder)
+            zip_file.extract(table_files["schema"], path=tables_folder)
