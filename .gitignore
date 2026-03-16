@@ -49,3 +49,4 @@ Thumbs.db
 **/logs/
 *.log
 **/.user.yml
+**/.ruff_cache/
