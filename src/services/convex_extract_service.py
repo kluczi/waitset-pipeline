@@ -1,6 +1,6 @@
 from zipfile import ZipFile
 from pathlib import Path
-from convex_export_service import (
+from src.services.convex_export_service import (
     current_date,
     get_project_root,
     get_convex_root,
@@ -58,8 +58,8 @@ def group_files_by_required_tables(
 
             if file_name == "documents.jsonl":
                 grouped_files[table_name]["documents"] = file
-            elif file_name == "generated_schema.jsonl":
-                grouped_files[table_name]["schema"] = file
+            # elif file_name == "generated_schema.jsonl":
+            #     grouped_files[table_name]["schema"] = file
 
     return grouped_files
 
@@ -79,7 +79,7 @@ def create_table_dirs(
         prepared_tables[table] = {
             "dir": folder,
             "documents": files["documents"],
-            "schema": files["schema"],
+            # "schema": files["schema"],
         }
 
     return prepared_tables
@@ -93,4 +93,12 @@ def extract_files(
     with open_export_zip(zip_path) as zip_file:
         for table_files in grouped_files.values():
             zip_file.extract(table_files["documents"], path=tables_folder)
-            zip_file.extract(table_files["schema"], path=tables_folder)
+            # zip_file.extract(table_files["schema"], path=tables_folder)
+
+
+if __name__ == "__main__":
+    today_zip = get_today_export_zip_path()
+    tables_folder = prepare_tables_folder(get_export_dir(today_zip))
+    grouped_files = group_files_by_required_tables(today_zip, TABLES)
+    tables = create_table_dirs(tables_folder, grouped_files)
+    extract_files(today_zip, tables_folder, grouped_files)
