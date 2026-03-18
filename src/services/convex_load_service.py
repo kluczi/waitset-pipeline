@@ -11,8 +11,21 @@ import psycopg
 from src.db.conn import get_connection
 from src.db.insert import insert_to_projects, insert_to_signups, insert_to_ust
 from src.db.create_tables import create_raw_schema
+import hashlib
 
 
+def compute_payload_hash(payload: dict) -> str:
+    normalized = json.dumps(
+        payload,
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+# today table dirs
 def get_table_dirs() -> list:
     today_zip = get_today_export_zip_path()
     tables_path = get_export_dir(today_zip) / Path("tables")
@@ -44,12 +57,11 @@ def parse_jsonl_records(file_path: Path) -> None:
 # pamietac o incrementalu i diffie!!
 # source_table, loaded_at, record_id, payload
 def build_raw_row(source_path: Path, record: dict) -> dict:
-    table_name = source_path.parent.name
+    # table_name = source_path.parent.name
     return {
-        "source": table_name,
-        "loaded_at": datetime.now(ZoneInfo("Europe/Warsaw")).isoformat(),
-        "updated_at": record.get("updatedAt"),
         "record_id": record.get("_id"),
+        "loaded_at": datetime.now(ZoneInfo("Europe/Warsaw")).isoformat(),
+        "payload_hash": compute_payload_hash(record),
         "payload": record,
     }
 
@@ -59,10 +71,9 @@ def map_dict_into_tuple(batch: dict):
     for row in batch:
         values.append(
             (
-                row["source"],
-                row["loaded_at"],
-                row["updated_at"],
                 row["record_id"],
+                row["loaded_at"],
+                row["payload_hash"],
                 json.dumps(row["payload"]),
             )
         )
@@ -80,7 +91,7 @@ def insert_raw_batch_into_db(table: str, batch: list, conn: psycopg):
             insert_to_ust(conn, values)
 
 
-def load_rows_into_batch(file_path: Path):
+def load_rows_into_batch(file_path: Path) -> list:
     batch = []
     BATCH_SIZE = 1000
     with get_connection() as conn:
@@ -104,7 +115,8 @@ def load_rows_into_db():
         load_rows_into_batch(path)
 
 
-load_rows_into_db()
+if __name__ == "__main__":
+    load_rows_into_db()
 
 # file_path = Path(
 #     "/Users/bartek/Desktop/waitset-pipeline/waitset-pipeline/convex/exports/2026-03-16/tables/projects/documents.jsonl"
