@@ -9,12 +9,10 @@ def create_raw_projects_table(conn):
     with conn.cursor() as cur:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS raw.raw_projects (
-                source TEXT,
+                record_id TEXT PRIMARY KEY,
                 loaded_at TIMESTAMPTZ,
-                updated_at TEXT,
-                record_id TEXT,
-                payload JSONB,
-                PRIMARY KEY (source, record_id)
+                payload_hash TEXT,
+                payload JSONB
             );
         """)
 
@@ -23,12 +21,10 @@ def create_raw_signups_table(conn):
     with conn.cursor() as cur:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS raw.raw_signups (
-                source TEXT,
+                record_id TEXT PRIMARY KEY,
                 loaded_at TIMESTAMPTZ,
-                updated_at TEXT,
-                record_id TEXT,
-                payload JSONB,
-                PRIMARY KEY (source, record_id)
+                payload_hash TEXT,
+                payload JSONB
             );
         """)
 
@@ -37,11 +33,15 @@ def create_raw_ust_table(conn):
     with conn.cursor() as cur:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS raw.raw_user_subscription_tracking (
-                source TEXT,
+                record_id TEXT PRIMARY KEY,
                 loaded_at TIMESTAMPTZ,
-                updated_at TEXT,
-                record_id TEXT,
-                payload JSONB,
-                PRIMARY KEY (source, record_id)
+                payload_hash TEXT,
+                payload JSONB
             );
         """)
+
+
+"""
+raw.raw_projects(record_id, loaded_at, payload_hash, payload)
+        VALUES (%s, %s, %s, %s)
+"""
