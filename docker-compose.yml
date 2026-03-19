@@ -67,8 +67,11 @@ services:
         environment:
             AIRFLOW__CORE__EXECUTOR: SequentialExecutor
             AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+            PYTHONPATH: /opt/airflow/project
+            AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow/dags
+
         volumes:
-            - ./airflow/dags:/opt/airflow/dags
+            - ./:/opt/airflow/project
         ports:
             - "8080:8080"
         command: airflow webserver
@@ -81,8 +84,11 @@ services:
         environment:
             AIRFLOW__CORE__EXECUTOR: SequentialExecutor
             AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+            PYTHONPATH: /opt/airflow/project
+            AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow/dags
+
         volumes:
-            - ./airflow/dags:/opt/airflow/dags
+            - ./:/opt/airflow/project
         command: airflow scheduler
 
 volumes:
