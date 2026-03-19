@@ -52,5 +52,5 @@ def run_convex_export() -> None:
     )
 
 
-if __name__ == "__main__":
-    run_convex_export()
+# if __name__ == "__main__":
+#     run_convex_export()
