@@ -2,10 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo  # to get Warsaw CET time
 import json
-from src.services.convex_extract_service import (
-    get_export_dir,
-    get_today_export_zip_path,
-)
+from src.services.convex_extract_service import get_export_dir
 
 import psycopg
 from src.db.conn import get_connection
@@ -26,8 +23,8 @@ def compute_payload_hash(payload: dict) -> str:
 
 
 # today table dirs
-def get_table_dirs() -> list:
-    today_zip = get_today_export_zip_path()
+def get_table_dirs(today_zip: Path) -> list:
+    # today_zip = get_today_export_zip_path()
     tables_path = get_export_dir(today_zip) / Path("tables")
     tables_dirs = []
     for table in tables_path.iterdir():
@@ -108,8 +105,8 @@ def load_rows_into_batch(file_path: Path) -> list:
             insert_raw_batch_into_db(file_path.parent.name, batch, conn)
 
 
-def load_rows_into_db():
-    tables_folder = get_table_dirs()
+def load_rows_into_db(zip_path: Path):
+    tables_folder = get_table_dirs(zip_path)
     for table in tables_folder:
         path = table / "documents.jsonl"
         load_rows_into_batch(path)

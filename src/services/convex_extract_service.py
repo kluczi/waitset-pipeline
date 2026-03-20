@@ -12,13 +12,12 @@ from src.services.convex_export_service import (
 TABLES: list[str] = ["projects", "signups", "user_subscription_tracking"]
 
 
-def get_today_export_zip_path() -> Path:
-    date = current_date()
-    project_root = get_project_root()
-    convex_root = get_convex_root(project_root)
-    export_path = generate_export_path(convex_root, date)
-    file_name = generate_export_file_name(date)
-    return build_full_path(export_path, file_name)
+# def get_today_export_zip_path() -> Path:
+#     project_root = get_project_root()
+#     convex_root = get_convex_root(project_root)
+#     export_path = generate_export_path(convex_root, date)
+#     file_name = generate_export_file_name(date)
+#     return build_full_path(export_path, file_name)
 
 
 def get_export_dir(zip_path: Path) -> Path:
@@ -96,9 +95,9 @@ def extract_files(
             # zip_file.extract(table_files["schema"], path=tables_folder)
 
 
-if __name__ == "__main__":
-    today_zip = get_today_export_zip_path()
-    tables_folder = prepare_tables_folder(get_export_dir(today_zip))
-    grouped_files = group_files_by_required_tables(today_zip, TABLES)
-    tables = create_table_dirs(tables_folder, grouped_files)
-    extract_files(today_zip, tables_folder, grouped_files)
+# if __name__ == "__main__":
+#     # today_zip = get_today_export_zip_path()
+#     tables_folder = prepare_tables_folder(get_export_dir(today_zip))
+#     grouped_files = group_files_by_required_tables(today_zip, TABLES)
+#     tables = create_table_dirs(tables_folder, grouped_files)
+#     extract_files(today_zip, tables_folder, grouped_files)
