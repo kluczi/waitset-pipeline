@@ -36,7 +36,6 @@ services:
             DB_USER: ${POSTGRES_USER}
             DB_PASSWORD: ${POSTGRES_PASSWORD}
         volumes:
-            # dbt project
             - ./waitset_pipeline:/usr/app
             - ./waitset_pipeline/profiles.yml:/root/.dbt/profiles.yml:ro
         working_dir: /usr/app
@@ -51,25 +50,38 @@ services:
             ]
 
     airflow-init:
-        image: apache/airflow:2.9.3
+        build:
+            context: .
+            dockerfile: ./airflow/Dockerfile
         environment:
             AIRFLOW__CORE__EXECUTOR: SequentialExecutor
             AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+            PYTHONPATH: /opt/airflow/project
+            AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
+            AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow/dags
+            _AIRFLOW_WWW_USER_USERNAME: ${AIRFLOW_ADMIN_USERNAME}
+            _AIRFLOW_WWW_USER_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
+            _AIRFLOW_WWW_USER_EMAIL: ${AIRFLOW_ADMIN_EMAIL}
         depends_on:
-            - postgres
+            postgres:
+                condition: service_healthy
+        volumes:
+            - ./:/opt/airflow/project
         command: airflow db migrate
 
     airflow-webserver:
-        image: apache/airflow:2.9.3
+        build:
+            context: .
+            dockerfile: ./airflow/Dockerfile
         depends_on:
             airflow-init:
                 condition: service_completed_successfully
         environment:
             AIRFLOW__CORE__EXECUTOR: SequentialExecutor
-            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5433/${POSTGRES_DB}
+            AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
             PYTHONPATH: /opt/airflow/project
             AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow/dags
-
         volumes:
             - ./:/opt/airflow/project
         ports:
@@ -77,16 +89,18 @@ services:
         command: airflow webserver
 
     airflow-scheduler:
-        image: apache/airflow:2.9.3
+        build:
+            context: .
+            dockerfile: ./airflow/Dockerfile
         depends_on:
             airflow-init:
                 condition: service_completed_successfully
         environment:
             AIRFLOW__CORE__EXECUTOR: SequentialExecutor
-            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5433/${POSTGRES_DB}
             PYTHONPATH: /opt/airflow/project
+            AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
             AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow/dags
-
         volumes:
             - ./:/opt/airflow/project
         command: airflow scheduler
