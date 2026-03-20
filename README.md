@@ -216,8 +216,8 @@ raw.raw_projects (
     payload      JSONB
 )
 
-raw.raw_signups              -- same columns
+raw.raw_signups                     -- same columns
 raw.raw_user_subscription_tracking  -- same columns
 ```
 
-`**payload_hash**` is a SHA-256 of the normalised JSON payload. The snapshot diff service uses it to detect which records have changed since the last load.
+`payload_hash` is a SHA-256 of the normalised JSON payload. The snapshot diff service uses it to detect which records have changed since the last load.
