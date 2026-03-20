@@ -146,7 +146,6 @@ AIRFLOW_ADMIN_EMAIL=
 
 #### Where to find each secret
 
-
 | Variable                         | Where to get it                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------------------ |
 | `POSTGRES_*`                     | Choose your own values; used to initialise the local container                       |
@@ -158,7 +157,6 @@ AIRFLOW_ADMIN_EMAIL=
 | `AIRFLOW__WEBSERVER__SECRET_KEY` | Any random string                                                                    |
 | `AIRFLOW_ADMIN_*`                | Your chosen Airflow admin credentials                                                |
 
-
 ### 4. Start all services
 
 ```bash
@@ -167,7 +165,6 @@ docker compose up --build
 
 This starts:
 
-
 | Service             | Description                                                          |
 | ------------------- | -------------------------------------------------------------------- |
 | `postgres`          | PostgreSQL 16 — stores raw data and dbt models                       |
@@ -175,7 +172,6 @@ This starts:
 | `airflow-init`      | Runs `airflow db migrate` and creates the admin user once            |
 | `airflow-webserver` | Airflow UI at [http://localhost:8080](http://localhost:8080)         |
 | `airflow-scheduler` | Picks up and schedules DAGs                                          |
-
 
 ---
 
@@ -192,14 +188,12 @@ The DAG runs the following tasks in order:
 export_data → prepare_extract_params → extract_data → load_data
 ```
 
-
 | Task                     | What it does                                                                                 |
 | ------------------------ | -------------------------------------------------------------------------------------------- |
 | `export_data`            | Calls `npx convex export`, saves a timestamped `.zip` under `convex/exports/`                |
 | `prepare_extract_params` | Resolves the tables folder and groups files by table name                                    |
 | `extract_data`           | Unzips `documents.jsonl` for each required table                                             |
 | `load_data`              | Parses records, computes payload hashes, and upserts into `raw.*` tables in batches of 1 000 |
-
 
 ### Running dbt manually
 
@@ -227,28 +221,3 @@ raw.raw_user_subscription_tracking  -- same columns
 ```
 
 `**payload_hash**` is a SHA-256 of the normalised JSON payload. The snapshot diff service uses it to detect which records have changed since the last load.
-
----
-
-## Local development (outside Docker)
-
-Install Python dependencies:
-
-```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-Run an individual service:
-
-```bash
-# Export a Convex snapshot
-python -m src.services.convex_export_service
-
-# Load records into Postgres (requires a zip path)
-python -m src.services.convex_load_service
-```
-
-> Make sure `.env` is present at the project root; `python-dotenv` loads it automatically.
-
