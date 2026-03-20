@@ -1,6 +1,6 @@
 # Waitset ETL & analysis pipeline
 
-Data pipeline for [waitset.com](https://waitset.com) - a waitlist platform used by real creators and businesses to collect signups, build audience hype, and launch products. This pipeline ingests live production data from Convex and PostHog into a local PostgreSQL warehouse for analytics and reporting.
+Data pipeline for [waitset](https://waitset.com) - a waitlist platform used by real creators and businesses to collect signups, build audience hype, and launch products. This pipeline ingests live production data from Convex and PostHog into a local PostgreSQL warehouse for analytics and reporting.
 
 It exports snapshots from [Convex](https://convex.dev) (application database), pulls behavioural events from [PostHog](https://posthog.com) (product analytics), loads everything into a PostgreSQL raw layer, and transforms it with dbt. Orchestrated by Apache Airflow, running fully in Docker.
 
