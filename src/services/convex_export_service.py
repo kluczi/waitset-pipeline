@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def current_date() -> str:
-    return datetime.now().strftime("%Y-%m-%d")
+    return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
 def get_project_root() -> Path:
@@ -36,7 +36,7 @@ def build_full_path(export_path: Path, file_name: str) -> Path:
     return export_path / file_name
 
 
-def run_convex_export() -> None:
+def run_convex_export() -> str:
     date = current_date()
     project_root = get_project_root()
     convex_root = get_convex_root(project_root)
@@ -45,12 +45,23 @@ def run_convex_export() -> None:
     full_path = build_full_path(export_path, file_name)
 
     create_directory(export_path)
-    subprocess.run(
-        ["npx", "convex", "export", "--path", str(full_path)],
-        check=True,
-        cwd=convex_root,
+
+    cmd = ["npx", "convex", "export", "--path", str(full_path)]
+
+    result = subprocess.run(
+        cmd,
+        cwd=str(convex_root),
+        capture_output=True,
+        text=True,
     )
 
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Convex export failed\n"
+            f"cwd: {project_root}\n"
+            f"cmd: {cmd}\n"
+            f"stdout:\n{result.stdout}\n"
+            f"stderr:\n{result.stderr}"
+        )
 
-# if __name__ == "__main__":
-#     run_convex_export()
+    return str(full_path)
