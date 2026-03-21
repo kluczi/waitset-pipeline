@@ -37,3 +37,7 @@ class PosthogClient:
     def get_persons(self):
         endpoint = f"/api/projects/{self.project_id}/persons"
         return self.fetch_all(endpoint)
+
+
+if __name__ == "__main__":
+    pass
