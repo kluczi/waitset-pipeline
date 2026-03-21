@@ -8,11 +8,12 @@ def create_raw_schema(conn):
 def create_raw_projects_table(conn):
     with conn.cursor() as cur:
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS raw.raw_projects (
-                record_id TEXT PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS raw.raw_convex_projects (
+                record_id TEXT,
                 loaded_at TIMESTAMPTZ,
                 payload_hash TEXT,
-                payload JSONB
+                payload JSONB,
+                PRIMARY KEY(record_id, loaded_at)
             );
         """)
 
@@ -20,11 +21,12 @@ def create_raw_projects_table(conn):
 def create_raw_signups_table(conn):
     with conn.cursor() as cur:
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS raw.raw_signups (
-                record_id TEXT PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS raw.raw_convex_signups (
+                record_id TEXT,
                 loaded_at TIMESTAMPTZ,
                 payload_hash TEXT,
-                payload JSONB
+                payload JSONB,
+                PRIMARY KEY(record_id, loaded_at)
             );
         """)
 
@@ -32,11 +34,38 @@ def create_raw_signups_table(conn):
 def create_raw_ust_table(conn):
     with conn.cursor() as cur:
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS raw.raw_user_subscription_tracking (
-                record_id TEXT PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS raw.raw_convex_user_subscription_tracking (
+                record_id TEXT,
                 loaded_at TIMESTAMPTZ,
                 payload_hash TEXT,
-                payload JSONB
+                payload JSONB,
+                PRIMARY KEY(record_id, loaded_at)
+            );
+        """)
+
+
+def create_raw_events_table(conn):
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS raw.raw_posthog_events(
+                record_id TEXT,
+                loaded_at TIMESTAMPTZ,
+                payload_hash TEXT,
+                payload JSONB,
+                PRIMARY KEY(record_id, loaded_at)
+            );
+        """)
+
+
+def create_raw_persons_table(conn):
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS raw.raw_posthog_persons(
+                record_id TEXT,
+                loaded_at TIMESTAMPTZ,
+                payload_hash TEXT,
+                payload JSONB,
+                PRIMARY KEY(record_id, loaded_at)
             );
         """)
 

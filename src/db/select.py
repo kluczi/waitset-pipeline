@@ -6,7 +6,7 @@ def fetch_all_from_projects(conn: psycopg) -> list:
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT * FROM raw.raw_projects;
+            SELECT * FROM raw.raw_convex_projects;
             """
         )
         results = cur.fetchall()
@@ -18,7 +18,7 @@ def fetch_all_from_ust(conn: psycopg):
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT * FROM raw.raw_user_subscription_tracking;
+            SELECT * FROM raw.raw_convex_user_subscription_tracking;
             """
         )
         results = cur.fetchall()
@@ -30,7 +30,7 @@ def fetch_all_from_signups(conn: psycopg):
     with conn.cursor() as cur:
         cur.execute(
             """
-            SELECT * FROM raw.signups;
+            SELECT * FROM raw.raw_convex_signups;
             """
         )
         results = cur.fetchall()
