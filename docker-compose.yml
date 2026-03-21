@@ -78,7 +78,7 @@ services:
                 condition: service_completed_successfully
         environment:
             AIRFLOW__CORE__EXECUTOR: SequentialExecutor
-            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5433/${POSTGRES_DB}
+            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
             AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
             PYTHONPATH: /opt/airflow/project
             AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow/dags
@@ -97,7 +97,7 @@ services:
                 condition: service_completed_successfully
         environment:
             AIRFLOW__CORE__EXECUTOR: SequentialExecutor
-            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5433/${POSTGRES_DB}
+            AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
             PYTHONPATH: /opt/airflow/project
             AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
             AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow/dags
