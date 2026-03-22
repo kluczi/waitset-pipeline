@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+    - name: raw
+      schema: raw
+      tables:
+          - name: raw_convex_user_subscription_tracking
+          - name: raw_convex_pages
+          - name: raw_convex_project_context
+          - name: raw_convex_projects
+          - name: raw_convex_signups
+          - name: raw_convex_users
