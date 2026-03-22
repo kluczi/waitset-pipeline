@@ -2,3 +2,5 @@ requests
 pandas
 psycopg
 python-dotenv
+dbt-core
+dbt-postgres
