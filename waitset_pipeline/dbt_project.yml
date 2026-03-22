@@ -48,5 +48,9 @@ snapshot-paths:
 models:
     waitset_pipeline:
         # Config indicated by + and applies to all files under models/example/
-        example:
+        staging:
             +materialized: view
+        intermediate:
+            +materialized: view
+        marts:
+            +materialized: table
