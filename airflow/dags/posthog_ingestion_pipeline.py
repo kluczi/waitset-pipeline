@@ -1,5 +1,4 @@
 from airflow.decorators import dag, task
-from src.clients.posthog_client import PosthogClient
 import pendulum
 from src.services.posthog_ingest_service import load_events, load_persons
 

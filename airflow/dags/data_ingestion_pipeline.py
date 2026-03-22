@@ -1,6 +1,6 @@
-from airflow.decorators import dag, task
+from airflow.decorators import dag
 import pendulum
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator  # pyright: ignore[reportMissingImports]
 
 
 @dag(
