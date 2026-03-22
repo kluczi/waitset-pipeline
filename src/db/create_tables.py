@@ -44,6 +44,45 @@ def create_raw_ust_table(conn):
         """)
 
 
+def create_raw_project_context_table(conn):
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS raw.raw_convex_project_context (
+                record_id TEXT,
+                loaded_at TIMESTAMPTZ,
+                payload_hash TEXT,
+                payload JSONB,
+                PRIMARY KEY(record_id, loaded_at)
+            );
+        """)
+
+
+def create_raw_pages_table(conn):
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS raw.raw_convex_pages (
+                record_id TEXT,
+                loaded_at TIMESTAMPTZ,
+                payload_hash TEXT,
+                payload JSONB,
+                PRIMARY KEY(record_id, loaded_at)
+            );
+        """)
+
+
+def create_raw_users_table(conn):
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS raw.raw_convex_users (
+                record_id TEXT,
+                loaded_at TIMESTAMPTZ,
+                payload_hash TEXT,
+                payload JSONB,
+                PRIMARY KEY(record_id, loaded_at)
+            );
+        """)
+
+
 def create_raw_events_table(conn):
     with conn.cursor() as cur:
         cur.execute("""

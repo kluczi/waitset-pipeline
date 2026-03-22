@@ -6,7 +6,14 @@ from src.services.convex_extract_service import get_export_dir
 
 import psycopg
 from src.db.conn import get_connection
-from src.db.insert import insert_to_projects, insert_to_signups, insert_to_ust
+from src.db.insert import (
+    insert_to_projects,
+    insert_to_signups,
+    insert_to_ust,
+    insert_to_users,
+    insert_to_pages,
+    insert_to_project_context,
+)
 from src.db.create_tables import create_raw_schema
 import hashlib
 
@@ -86,6 +93,12 @@ def insert_raw_batch_into_db(table: str, batch: list, conn: psycopg):
             insert_to_signups(conn, values)
         case "user_subscription_tracking":
             insert_to_ust(conn, values)
+        case "project_context":
+            insert_to_project_context(conn, values)
+        case "pages":
+            insert_to_pages(conn, values)
+        case "users":
+            insert_to_users(conn, values)
 
 
 def load_rows_into_batch(file_path: Path) -> list:

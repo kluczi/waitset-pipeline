@@ -9,7 +9,19 @@ from src.services.convex_export_service import (
     build_full_path,
 )
 
-TABLES: list[str] = ["projects", "signups", "user_subscription_tracking"]
+TABLES: list[str] = [
+    "projects",
+    "signups",
+    "user_subscription_tracking",
+    "project_context",
+    "pages",
+    "waitlists",
+    "waitlists_emails",
+]
+
+COMPONENT_TABLES: dict[str, str] = {
+    "users": "_components/betterAuth/user",
+}
 
 
 # def get_today_export_zip_path() -> Path:
@@ -61,6 +73,34 @@ def group_files_by_required_tables(
             #     grouped_files[table_name]["schema"] = file
 
     return grouped_files
+
+
+def group_component_files(
+    zip_path: Path, component_tables: dict[str, str]
+) -> dict[str, dict[str, str]]:
+
+    grouped: dict[str, dict[str, str]] = {}
+
+    with open_export_zip(zip_path) as zip_file:
+        file_list = get_files_list(zip_file)
+        for logical_name, prefix in component_tables.items():
+            documents_path = f"{prefix}/documents.jsonl"
+            if documents_path in file_list:
+                grouped[logical_name] = {"documents": documents_path}
+
+    return grouped
+
+
+def extract_component_files(
+    zip_path: Path,
+    tables_folder: Path,
+    component_files: dict[str, dict[str, str]],
+) -> None:
+    with open_export_zip(zip_path) as zip_file:
+        for logical_name, files in component_files.items():
+            target = tables_folder / logical_name / "documents.jsonl"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(zip_file.read(files["documents"]))
 
 
 def prepare_tables_folder(export_dir: Path) -> Path:
