@@ -167,7 +167,7 @@ This starts:
 
 | Service             | Description                                                          |
 | ------------------- | -------------------------------------------------------------------- |
-| `postgres`          | PostgreSQL 16 — stores raw data and dbt models                       |
+| `postgres`          | PostgreSQL 16 - stores raw data and dbt models                       |
 | `dbt`               | dbt-core + dbt-postgres container (stays alive for manual `dbt run`) |
 | `airflow-init`      | Runs `airflow db migrate` and creates the admin user once            |
 | `airflow-webserver` | Airflow UI at [http://localhost:8080](http://localhost:8080)         |
