@@ -1,7 +1,7 @@
 WITH src AS (
     SELECT
         loaded_at::timestamp as loaded_at,
-        (payload->>'_id')::text as id,
+        (payload->>'_id')::text as user_id,
         to_timestamp((payload->>'createdAt')::float/1000)::timestamp as created_at,
         (payload->>'email')::text as email,
         (payload->>'name')::text as name
@@ -9,11 +9,11 @@ WITH src AS (
 ),
 
 deduped AS (
-    {{deduplicate_latest('src', 'id', 'loaded_at')}}
+    {{deduplicate_latest('src', 'user_id', 'loaded_at')}}
 )
 
 SELECT
-    deduped.id,
+    deduped.user_id,
     deduped.email,
     deduped.name,
     deduped.created_at
