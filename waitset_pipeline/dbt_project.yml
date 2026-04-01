@@ -49,7 +49,10 @@ models:
     waitset_pipeline:
         # Config indicated by + and applies to all files under models/example/
         staging:
-            +materialized: view
+            convex:
+                +materialized: view
+            posthog:
+                +materialized: view
         intermediate:
             +materialized: view
         marts:
