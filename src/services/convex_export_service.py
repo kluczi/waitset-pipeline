@@ -1,10 +1,11 @@
 import subprocess
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 def current_date() -> str:
-    return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    return datetime.now(ZoneInfo("Europe/Warsaw")).strftime("%Y-%m-%d_%H-%M-%S")
 
 
 def get_project_root() -> Path:
