@@ -1,6 +1,5 @@
 WITH src AS (
     SELECT
-        {{dbt_utils.generate_surrogate_key(['u.user_id', 'u.email'])}} as user_sk,
         u.user_id as id,
         u.email as email,
         u.name as name,
