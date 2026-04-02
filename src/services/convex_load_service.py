@@ -13,6 +13,7 @@ from src.db.insert import (
     insert_to_users,
     insert_to_pages,
     insert_to_project_context,
+    insert_to_waitlists,
 )
 from src.db.create_tables import create_raw_schema
 import hashlib
@@ -99,6 +100,8 @@ def insert_raw_batch_into_db(table: str, batch: list, conn: psycopg):
             insert_to_pages(conn, values)
         case "users":
             insert_to_users(conn, values)
+        case "waitlists":
+            insert_to_waitlists(conn, values)
 
 
 def load_rows_into_batch(file_path: Path) -> list:

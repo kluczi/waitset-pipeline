@@ -8,6 +8,7 @@ from src.db.create_tables import (
     create_raw_persons_table,
     create_raw_pages_table,
     create_raw_project_context_table,
+    create_raw_waitlists_table,
 )
 
 
@@ -101,6 +102,18 @@ def insert_to_persons(conn: psycopg, values: list):
         cur.executemany(
             """
         INSERT INTO raw.raw_posthog_persons (record_id, loaded_at, payload_hash, payload)
+        VALUES (%s, %s, %s, %s)
+        """,
+            values,
+        )
+
+
+def insert_to_waitlists(conn: psycopg, values: list):
+    with conn.cursor() as cur:
+        create_raw_waitlists_table(conn)
+        cur.executemany(
+            """
+        INSERT INTO raw.raw_convex_waitlists (record_id, loaded_at, payload_hash, payload)
         VALUES (%s, %s, %s, %s)
         """,
             values,

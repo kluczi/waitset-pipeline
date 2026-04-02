@@ -16,7 +16,7 @@ TABLES: list[str] = [
     "project_context",
     "pages",
     "waitlists",
-    "waitlists_emails",
+    # "waitlists_emails",
 ]
 
 COMPONENT_TABLES: dict[str, str] = {

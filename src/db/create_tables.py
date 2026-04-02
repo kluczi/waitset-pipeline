@@ -70,6 +70,19 @@ def create_raw_pages_table(conn):
         """)
 
 
+def create_raw_waitlists_table(conn):
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS raw.raw_convex_waitlists (
+                record_id TEXT,
+                loaded_at TIMESTAMPTZ,
+                payload_hash TEXT,
+                payload JSONB,
+                PRIMARY KEY(record_id, loaded_at)
+            );
+        """)
+
+
 def create_raw_users_table(conn):
     with conn.cursor() as cur:
         cur.execute("""
