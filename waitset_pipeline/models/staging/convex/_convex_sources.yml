@@ -10,3 +10,4 @@ sources:
           - name: raw_convex_projects
           - name: raw_convex_signups
           - name: raw_convex_users
+          - name: raw_convex_waitlists
