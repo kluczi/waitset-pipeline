@@ -1,4 +1,4 @@
-# Waitset ETL & analysis pipeline
+# Waitset ELT & analysis pipeline
 
 Data pipeline for [waitset](https://waitset.com) - a waitlist platform used by real creators and businesses to collect signups, build audience hype, and launch products. This pipeline ingests live production data from Convex and PostHog into a local PostgreSQL warehouse for analytics and reporting.
 
