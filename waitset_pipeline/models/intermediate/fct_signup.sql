@@ -4,7 +4,7 @@ WITH src AS (
         s.created_at as signup_at,
         s.waitlist_id,
         s.page_id
-    FROM {{ref('dim_waitlist')}} w 
+    FROM {{ref('stg_convex__signups')}} s
 )
 
 SELECT 
