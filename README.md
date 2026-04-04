@@ -4,6 +4,9 @@ Data pipeline for [waitset](https://waitset.com) - a waitlist platform used by r
 
 It exports snapshots from [Convex](https://convex.dev) (application database), pulls behavioural events from [PostHog](https://posthog.com) (product analytics), loads everything into a PostgreSQL raw layer, and transforms it with dbt. Orchestrated by Apache Airflow and visualised with Metabase, running fully in Docker.
 
+<img width="1087" height="775" alt="waitset_pipeline_1" src="https://github.com/user-attachments/assets/aa0dd6a4-5eb7-4dcb-bcd5-edf9edb1d169" />
+<img width="1089" height="678" alt="waitset_pipeline_2" src="https://github.com/user-attachments/assets/dc095683-a125-4589-b1e3-af6aac327a8e" />
+
 ---
 
 ## Architecture
