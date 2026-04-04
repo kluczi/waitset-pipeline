@@ -2,49 +2,23 @@
 
 Data pipeline for [waitset](https://waitset.com) - a waitlist platform used by real creators and businesses to collect signups, build audience hype, and launch products. This pipeline ingests live production data from Convex and PostHog into a local PostgreSQL warehouse for analytics and reporting.
 
-It exports snapshots from [Convex](https://convex.dev) (application database), pulls behavioural events from [PostHog](https://posthog.com) (product analytics), loads everything into a PostgreSQL raw layer, and transforms it with dbt. Orchestrated by Apache Airflow, running fully in Docker.
+It exports snapshots from [Convex](https://convex.dev) (application database), pulls behavioural events from [PostHog](https://posthog.com) (product analytics), loads everything into a PostgreSQL raw layer, and transforms it with dbt. Orchestrated by Apache Airflow and visualised with Metabase, running fully in Docker.
 
 ---
 
 ## Architecture
 
-```
-┌─────────────────────────────────┐   ┌──────────────────────────────────┐
-│  Convex  (application DB)       │   │  PostHog  (product analytics)    │
-│                                 │   |                                  │
-└────────────┬────────────────────┘   └───────────────┬──────────────────┘
-             │                                        │
-             │  npx convex export                     │  REST API
-             │  (convex_export_service)               │  (posthog_client)
-             ▼                                        ▼
-  convex/exports/<timestamp>/            [planned ingestion service]
-             │
-             │  unzip + filter tables
-             │  (convex_extract_service)
-             ▼
-  .../tables/<table>/documents.jsonl
-             │
-             │  parse → hash → batch insert
-             │  (convex_load_service)
-             │
-             └──────────────┐
-                            ▼
-                    PostgreSQL  raw.*
-                            │
-                            │  dbt run  (staging layer)
-                            │  - deduplicate by payload_hash and loaded_at
-                            │  - diff new / updated / deleted
-                            ▼
-                    PostgreSQL  staging.*
-                            │
-                            │  dbt run  (mart layer)
-                            ▼
-                    PostgreSQL  dbt.*
-```
+Data flows through four stages:
 
-**Snapshot diffing** happens in the dbt staging layer. Raw tables receive a full snapshot on every run; staging models use `payload_hash` and `loaded_at` to deduplicate and identify new, updated and deleted records.
+**Extraction** - Convex snapshots are exported via `npx convex export`, producing a timestamped zip of `documents.jsonl` files, one per table. PostHog events and persons are fetched through the REST API with pagination.
 
-**PostHog ingestion** is implemented in `src/clients/posthog_client.py` (paginated fetch of events and persons) and will be wired into the Airflow DAG as a parallel ingestion branch.
+**Loading** - The extract service unzips the snapshot and filters the required tables. The load service parses each JSONL file, computes a SHA-256 `payload_hash` per record and batch-inserts everything into the `raw.*` schema in PostgreSQL (1 000 records per batch).
+
+**Transformation** — dbt runs in three layers. The staging layer casts and renames fields from raw JSONB payloads and deduplicates records using `loaded_at`. The intermediate layer joins staging models into dimension tables (`dim_user`, `dim_project`, `dim_waitlist`, `dim_page`) and a fact table (`fct_signup`). The marts layer produces ready-to-query reporting models.
+
+**Visualisation** — Metabase connects directly to PostgreSQL and queries the marts layer. Dashboards are built on top of the reporting models to track signups, active users and subscription breakdown.
+
+Airflow orchestrates the full ingestion cycle on a schedule and also triggers the dbt run after each successful load.
 
 ---
 
@@ -53,38 +27,66 @@ It exports snapshots from [Convex](https://convex.dev) (application database), p
 ```
 waitset-pipeline/
 ├── airflow/
-│   ├── Dockerfile                        # Custom Airflow image (adds Node.js 20 + Python deps)
+│   ├── Dockerfile                             # Custom Airflow image
 │   └── dags/
-│       ├── dbt_pipeline.py               # Simple daily dbt run DAG
-│       └── data_ingestion_pipeline.py    # Main ingestion DAG (export → extract → load)
-├── convex/                               # Node.js project for Convex CLI
+│       ├── dbt_pipeline.py                    # Daily dbt run DAG
+│       ├── data_ingestion_pipeline.py         # Main orchestration DAG
+│       ├── convex_ingestion_pipeline.py       # Convex export > extract > load
+│       └── posthog_ingestion_pipeline.py      # PostHog events and persons ingestion
+├── convex/                                    # Node.js project for Convex CLI
 │   ├── package.json
-│   └── convex/_generated/                # Auto-generated by Convex (not committed)
+│   └── convex/_generated/                     # Auto-generated by Convex
 ├── src/
 │   ├── clients/
-│   │   ├── convex_client.py              # HTTP client for Convex query API
-│   │   └── posthog_client.py             # Paginated PostHog REST client
+│   │   ├── convex_client.py                   # HTTP client for Convex query API
+│   │   └── posthog_client.py                  # Paginated PostHog REST client
 │   ├── db/
-│   │   ├── conn.py                       # psycopg connection via POSTGRES_DSN
-│   │   ├── create_tables.py              # DDL for raw.* tables
-│   │   ├── insert.py                     # executemany insert helpers
-│   │   ├── select.py                     # SELECT helpers
-│   │   ├── update.py                     # UPDATE helpers
-│   │   └── delete.py                     # DELETE helpers
+│   │   ├── conn.py                            # psycopg connection via POSTGRES_DSN
+│   │   ├── create_tables.py                   # DDL for raw.* tables
+│   │   ├── insert.py                          # executemany insert helpers
+│   │   ├── select.py                          # SELECT helpers
+│   │   ├── update.py                          # UPDATE helpers
+│   │   └── delete.py                          # DELETE helpers
 │   └── services/
-│       ├── convex_export_service.py      # Runs `npx convex export`, returns zip path
-│       ├── convex_extract_service.py     # Unzips snapshot, filters required tables
-│       ├── convex_load_service.py        # Parses JSONL, batches and inserts to Postgres
-│       ├── convex_snapshot_diff_service.py  # Diffs snapshot vs DB by payload hash
-│       └── convex_cleanup_service.py     # Removes stale export directories
-├── waitset_pipeline/                     # dbt project
+│       ├── convex_export_service.py           # Runs `npx convex export`, returns zip path
+│       ├── convex_extract_service.py          # Unzips snapshot, filters required tables
+│       ├── convex_load_service.py             # Parses JSONL, batches and inserts to Postgres
+│       ├── convex_snapshot_diff_service.py    # Diffs snapshot vs DB by payload hash
+│       └── convex_cleanup_service.py          # Removes stale export directories
+├── waitset_pipeline/                          # dbt project
 │   ├── Dockerfile
 │   ├── dbt_project.yml
 │   ├── profiles.yml
+│   ├── packages.yml                           # dbt-labs/dbt_utils
+│   ├── macros/
+│   │   └── deduplicate_latest.sql             # Deduplicates by partition key and loaded_at
 │   └── models/
+│       ├── staging/
+│       │   └── convex/
+│       │       ├── _convex_sources.yml
+│       │       ├── stg_convex__users.sql
+│       │       ├── stg_convex__user_subscription_tracking.sql
+│       │       ├── stg_convex__signups.sql
+│       │       ├── stg_convex__projects.sql
+│       │       ├── stg_convex__project_context.sql
+│       │       ├── stg_convex__waitlists.sql
+│       │       └── stg_convex__pages.sql
+│       ├── intermediate/
+│       │   ├── dim_user.sql                   # Users joined with subscription tracking
+│       │   ├── dim_project.sql                # Projects joined with project context
+│       │   ├── dim_waitlist.sql               # Waitlists
+│       │   ├── dim_page.sql                   # Pages
+│       │   └── fct_signup.sql                 # Signup events fact table
+│       └── marts/
+│           ├── rpt__total_signups.sql
+│           ├── rpt__signups_over_time.sql
+│           ├── rpt__signups_per_waitlist.sql
+│           ├── rpt__signups_per_project.sql
+│           ├── rpt__active_users.sql
+│           └── rpt__users_by_subscriptions.sql
 ├── docker-compose.yml
 ├── requirements.txt
-└── .env                                  # Local secrets
+└── .env                                       # Local secrets
 ```
 
 ---
@@ -167,11 +169,12 @@ This starts:
 
 | Service             | Description                                                          |
 | ------------------- | -------------------------------------------------------------------- |
-| `postgres`          | PostgreSQL 16 - stores raw data and dbt models                       |
+| `postgres`          | PostgreSQL 16 — stores raw data and dbt models                       |
 | `dbt`               | dbt-core + dbt-postgres container (stays alive for manual `dbt run`) |
 | `airflow-init`      | Runs `airflow db migrate` and creates the admin user once            |
 | `airflow-webserver` | Airflow UI at [http://localhost:8080](http://localhost:8080)         |
 | `airflow-scheduler` | Picks up and schedules DAGs                                          |
+| `metabase`          | Metabase at [http://localhost:3000](http://localhost:3000)           |
 
 ---
 
@@ -180,7 +183,7 @@ This starts:
 ### Via Airflow (recommended)
 
 1. Open [http://localhost:8080](http://localhost:8080) and log in with your `AIRFLOW_ADMIN_USERNAME` / `AIRFLOW_ADMIN_PASSWORD`.
-2. Enable and trigger the `**data_ingestion**` DAG.
+2. Enable and trigger the `data_ingestion` DAG.
 
 The DAG runs the following tasks in order:
 
@@ -206,18 +209,47 @@ docker compose exec dbt dbt test
 
 ## Raw database schema
 
-Records from Convex are loaded into the `raw` schema in PostgreSQL:
+Records from Convex are loaded into the `raw` schema in PostgreSQL. Every table follows the same structure:
 
 ```sql
-raw.raw_projects (
-    record_id    TEXT PRIMARY KEY,
+(
+    record_id    TEXT,
     loaded_at    TIMESTAMPTZ,
     payload_hash TEXT,
-    payload      JSONB
+    payload      JSONB,
+    PRIMARY KEY (record_id, loaded_at)
 )
-
-raw.raw_signups                     -- same columns
-raw.raw_user_subscription_tracking  -- same columns
 ```
 
+Tables in the `raw` schema:
+
+| Table                                       | Source  |
+| ------------------------------------------- | ------- |
+| `raw.raw_convex_users`                      | Convex  |
+| `raw.raw_convex_user_subscription_tracking` | Convex  |
+| `raw.raw_convex_signups`                    | Convex  |
+| `raw.raw_convex_projects`                   | Convex  |
+| `raw.raw_convex_project_context`            | Convex  |
+| `raw.raw_convex_waitlists`                  | Convex  |
+| `raw.raw_convex_pages`                      | Convex  |
+| `raw.raw_posthog_events`                    | PostHog |
+| `raw.raw_posthog_persons`                   | PostHog |
+
 `payload_hash` is a SHA-256 of the normalised JSON payload. The snapshot diff service uses it to detect which records have changed since the last load.
+
+---
+
+## Dashboards
+
+Metabase connects to PostgreSQL and queries the marts layer directly. Open [http://localhost:3000](http://localhost:3000) after the stack is up to access the dashboards.
+
+Implemented reports:
+
+| Model                         | Description                                              |
+| ----------------------------- | -------------------------------------------------------- |
+| `rpt__total_signups`          | Total number of signups across all waitlists             |
+| `rpt__signups_over_time`      | Weekly signup counts                                     |
+| `rpt__signups_per_waitlist`   | Signups per waitlist with owner and subscription details |
+| `rpt__signups_per_project`    | Average signups per project                              |
+| `rpt__active_users`           | Users active within the last 30 days                     |
+| `rpt__users_by_subscriptions` | User count broken down by subscription status            |
