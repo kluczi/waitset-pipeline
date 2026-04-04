@@ -1,0 +1,109 @@
+version: 2
+
+models:
+  - name: dim_user
+    description: >
+      User dimension joining users with their subscription tracking data.
+      Contains one row per user with their latest subscription state.
+    columns:
+      - name: id
+        description: Primary key — Convex user ID.
+        tests:
+          - unique
+          - not_null
+      - name: email
+        description: User's email address.
+        tests:
+          - not_null
+      - name: name
+        description: User's display name.
+      - name: last_subscription_status
+        description: Most recent subscription status (e.g. free, pro).
+      - name: subscription_start_date
+        description: Timestamp when the current subscription period started.
+      - name: last_activity_date
+        description: Timestamp of the user's most recent activity.
+
+  - name: dim_project
+    description: >
+      Project dimension joining projects with their onboarding context.
+      Contains one row per project enriched with product type and acquisition channel.
+    columns:
+      - name: id
+        description: Primary key — Convex project ID.
+        tests:
+          - unique
+          - not_null
+      - name: name
+        description: Project name.
+        tests:
+          - not_null
+      - name: owner_id
+        description: Foreign key referencing dim_user.id.
+        tests:
+          - not_null
+      - name: created_at
+        description: Timestamp when the project was created.
+      - name: updated_at
+        description: Timestamp of the most recent update.
+      - name: heard_from
+        description: Acquisition channel reported during onboarding.
+      - name: product_type
+        description: Detected product type from onboarding (e.g. saas, marketplace).
+
+  - name: dim_waitlist
+    description: Waitlist dimension with one row per waitlist.
+    columns:
+      - name: id
+        description: Primary key — Convex waitlist ID.
+        tests:
+          - unique
+          - not_null
+      - name: name
+        description: Waitlist name.
+        tests:
+          - not_null
+      - name: project_id
+        description: Foreign key referencing dim_project.id.
+        tests:
+          - not_null
+      - name: is_public
+        description: Whether the waitlist is publicly accessible.
+
+  - name: dim_page
+    description: Page dimension with one row per landing page.
+    columns:
+      - name: id
+        description: Primary key — Convex page ID.
+        tests:
+          - unique
+          - not_null
+      - name: waitlist_id
+        description: Foreign key referencing dim_waitlist.id.
+        tests:
+          - not_null
+      - name: template_key
+        description: Template identifier used to render the page.
+      - name: is_enabled
+        description: Whether the page is live and accepting signups.
+
+  - name: fct_signup
+    description: Fact table of waitlist signup events.
+    columns:
+      - name: signup_id
+        description: Primary key — Convex signup document ID.
+        tests:
+          - unique
+          - not_null
+      - name: signup_at
+        description: Timestamp when the signup occurred.
+        tests:
+          - not_null
+      - name: waitlist_id
+        description: Foreign key referencing dim_waitlist.id.
+        tests:
+          - not_null
+      - name: page_id
+        description: Foreign key referencing dim_page.id.
+        tests:
+          - not_null

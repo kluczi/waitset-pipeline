@@ -1,0 +1,172 @@
+version: 2
+
+models:
+  - name: stg_convex__users
+    description: Deduplicated users from the Convex application database.
+    columns:
+      - name: user_id
+        description: Primary key — Convex document ID of the user.
+        tests:
+          - unique
+          - not_null
+      - name: email
+        description: User's email address.
+        tests:
+          - not_null
+      - name: name
+        description: User's display name.
+      - name: created_at
+        description: Timestamp when the user record was created in Convex.
+        tests:
+          - not_null
+
+  - name: stg_convex__user_subscription_tracking
+    description: Deduplicated subscription tracking records for each user.
+    columns:
+      - name: id
+        description: Primary key — Convex document ID of the tracking record.
+        tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: Foreign key referencing stg_convex__users.user_id.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_convex__users')
+              field: user_id
+      - name: last_activity_date
+        description: Timestamp of the user's most recent activity.
+      - name: last_subscription_status
+        description: Most recent subscription status (e.g. free, pro).
+      - name: subscription_start_date
+        description: Timestamp when the current subscription period started.
+      - name: creation_time
+        description: Timestamp when the tracking record was first created in Convex.
+
+  - name: stg_convex__signups
+    description: Deduplicated waitlist signup records.
+    columns:
+      - name: id
+        description: Primary key — Convex document ID of the signup.
+        tests:
+          - unique
+          - not_null
+      - name: contact_mail
+        description: Email address submitted by the person signing up.
+        tests:
+          - not_null
+      - name: created_at
+        description: Timestamp when the signup was recorded.
+        tests:
+          - not_null
+      - name: page_id
+        description: Foreign key referencing the page the signup came from.
+        tests:
+          - not_null
+      - name: waitlist_id
+        description: Foreign key referencing the waitlist the signup belongs to.
+        tests:
+          - not_null
+
+  - name: stg_convex__projects
+    description: Deduplicated project records.
+    columns:
+      - name: id
+        description: Primary key — Convex document ID of the project.
+        tests:
+          - unique
+          - not_null
+      - name: name
+        description: Project name.
+        tests:
+          - not_null
+      - name: owner_id
+        description: Foreign key referencing the user who owns this project.
+        tests:
+          - not_null
+      - name: created_at
+        description: Timestamp when the project was created.
+      - name: created_by
+        description: User ID of the creator.
+      - name: updated_at
+        description: Timestamp of the most recent update.
+      - name: updated_by
+        description: User ID who last updated the project.
+      - name: is_deleted
+        description: Whether the project has been soft-deleted.
+
+  - name: stg_convex__project_context
+    description: Deduplicated onboarding and metadata context for each project.
+    columns:
+      - name: id
+        description: Primary key — Convex document ID of the project context record.
+        tests:
+          - unique
+          - not_null
+      - name: project_id
+        description: Foreign key referencing stg_convex__projects.id.
+        tests:
+          - not_null
+      - name: heard_from
+        description: How the user heard about the platform (e.g. google, twitter).
+      - name: product_type
+        description: Detected product type from onboarding (e.g. saas, marketplace).
+      - name: created_at
+        description: Timestamp when the context record was created.
+      - name: updated_at
+        description: Timestamp of the most recent update.
+
+  - name: stg_convex__waitlists
+    description: Deduplicated waitlist records belonging to projects.
+    columns:
+      - name: id
+        description: Primary key — Convex document ID of the waitlist.
+        tests:
+          - unique
+          - not_null
+      - name: name
+        description: Waitlist name.
+        tests:
+          - not_null
+      - name: project_id
+        description: Foreign key referencing stg_convex__projects.id.
+        tests:
+          - not_null
+      - name: is_public
+        description: Whether the waitlist is publicly accessible.
+      - name: created_at
+        description: Timestamp when the waitlist was created.
+      - name: created_by
+        description: User ID of the creator.
+      - name: updated_at
+        description: Timestamp of the most recent update.
+      - name: updated_by
+        description: User ID who last updated the waitlist.
+
+  - name: stg_convex__pages
+    description: Deduplicated landing page records associated with waitlists.
+    columns:
+      - name: id
+        description: Primary key — Convex document ID of the page.
+        tests:
+          - unique
+          - not_null
+      - name: waitlist_id
+        description: Foreign key referencing stg_convex__waitlists.id.
+        tests:
+          - not_null
+      - name: domain
+        description: Custom domain or subdomain configured for the page.
+      - name: template_key
+        description: Identifier for the page template used (e.g. dither@0.0.1).
+      - name: is_enabled
+        description: Whether the page is live and accepting signups.
+      - name: created_at
+        description: Timestamp when the page was created.
+      - name: created_by
+        description: User ID of the creator.
+      - name: updated_at
+        description: Timestamp of the most recent update.
+      - name: updated_by
+        description: User ID who last updated the page.

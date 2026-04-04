@@ -1,0 +1,69 @@
+version: 2
+
+models:
+  - name: rpt__total_signups
+    description: Total number of signup events across all waitlists.
+    columns:
+      - name: total_signups
+        description: Count of all signup records in fct_signup.
+        tests:
+          - not_null
+
+  - name: rpt__signups_over_time
+    description: Weekly signup counts, ordered chronologically.
+    columns:
+      - name: week
+        description: Start of the week (date-truncated to week).
+        tests:
+          - not_null
+      - name: signups
+        description: Number of signups recorded in that week.
+        tests:
+          - not_null
+
+  - name: rpt__signups_per_waitlist
+    description: >
+      Signup counts per waitlist, enriched with project name, owner email,
+      and owner subscription status.
+    columns:
+      - name: waitlist_id
+        description: Convex waitlist ID.
+        tests:
+          - unique
+          - not_null
+      - name: project_name
+        description: Name of the project the waitlist belongs to.
+      - name: owner_email
+        description: Email of the project owner.
+      - name: subscription
+        description: Subscription status of the project owner.
+      - name: signups_cnt
+        description: Total number of signups for this waitlist.
+
+  - name: rpt__signups_per_project
+    description: Average number of signups across all waitlists per project.
+    columns:
+      - name: avg_signups_per_project
+        description: Mean signup count computed across all projects.
+        tests:
+          - not_null
+
+  - name: rpt__active_users
+    description: Count of users who had activity within the last 30 days.
+    columns:
+      - name: active_users
+        description: Number of users with last_activity_date within the past 30 days.
+        tests:
+          - not_null
+
+  - name: rpt__users_by_subscriptions
+    description: Number of users grouped by their current subscription status.
+    columns:
+      - name: subscription
+        description: Subscription status (e.g. free, pro).
+        tests:
+          - not_null
+      - name: users_cnt
+        description: Number of users with this subscription status.
+        tests:
+          - not_null
