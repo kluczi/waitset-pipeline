@@ -17,7 +17,7 @@ Data flows through four stages:
 
 **Loading** - The extract service unzips the snapshot and filters the required tables. The load service parses each JSONL file, computes a SHA-256 `payload_hash` per record and batch-inserts everything into the `raw.*` schema in PostgreSQL (1 000 records per batch).
 
-**Transformation** — dbt runs in three layers. The staging layer casts and renames fields from raw JSONB payloads and deduplicates records using `loaded_at`. The intermediate layer joins staging models into dimension tables (`dim_user`, `dim_project`, `dim_waitlist`, `dim_page`) and a fact table (`fct_signup`). The marts layer produces ready-to-query reporting models.
+**Transformation** - dbt runs in three layers. The staging layer casts and renames fields from raw JSONB payloads and deduplicates records using `loaded_at`. The intermediate layer joins staging models into dimension tables (`dim_user`, `dim_project`, `dim_waitlist`, `dim_page`) and a fact table (`fct_signup`). The marts layer produces ready-to-query reporting models.
 
 **Visualisation** — Metabase connects directly to PostgreSQL and queries the marts layer. Dashboards are built on top of the reporting models to track signups, active users and subscription breakdown.
 
