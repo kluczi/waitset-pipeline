@@ -19,7 +19,7 @@ Data flows through four stages:
 
 **Transformation** - dbt runs in three layers. The staging layer casts and renames fields from raw JSONB payloads and deduplicates records using `loaded_at`. The intermediate layer joins staging models into dimension tables (`dim_user`, `dim_project`, `dim_waitlist`, `dim_page`) and a fact table (`fct_signup`). The marts layer produces ready-to-query reporting models.
 
-**Visualisation** — Metabase connects directly to PostgreSQL and queries the marts layer. Dashboards are built on top of the reporting models to track signups, active users and subscription breakdown.
+**Visualisation** - Metabase connects directly to PostgreSQL and queries the marts layer. Dashboards are built on top of the reporting models to track signups, active users and subscription breakdown.
 
 Airflow orchestrates the full ingestion cycle on a schedule and also triggers the dbt run after each successful load.
 
